@@ -11,7 +11,7 @@ from PySide6.QtWidgets import (QApplication, QHBoxLayout, QMainWindow, QMenuBar,
     QWidget)
 import cv2
 import numpy as np
-# import yolov5
+import yolov5
 import pandas
 
 
@@ -30,8 +30,10 @@ class video_player():
         self._is_first_time = True
         self._ui_window.Load.clicked.connect(self._open_file)
 
-        # self._model = yolov5.load('yolov5s.pt')
+        self._model = yolov5.load('yolov5s.pt')
         self._clear_value()
+        self._mode = "Viewmode"
+        self._ui_window.comboBox.currentTextChanged.connect(self._set_mode)
 
 
         self._is_on = True
@@ -58,6 +60,20 @@ class video_player():
         self._current_frame = 0
         self._total_frame = 0
 
+        self.width = 0
+        self.height = 0
+
+        self._ui_window.Action_1.setChecked(True)
+        self._ui_window.Action_1.setCheckable(False)
+        self._ui_window.Action_2.setCheckable(False)
+        self._ui_window.Action_3.setCheckable(False)
+        self._ui_window.Action_4.setCheckable(False)
+        self._ui_window.Action_5.setCheckable(False)
+        self._ui_window.Action_6.setCheckable(False)
+        self._ui_window.Action_7.setCheckable(False)
+        self._ui_window.Action_8.setCheckable(False)
+        self._ui_window.Action_9.setCheckable(False)
+
     def _open_file(self):
         self._history_path = self._file_path
         self._file_path, _ = QFileDialog.getOpenFileName(self._ui_window.Load, "请选择对应文件", ".", "mp4(*.mp4);;avi(*.avi);;flv(*.flv)")
@@ -71,18 +87,23 @@ class video_player():
             self._play_video()
 
     def _set_frame(self):
+        # set the current frame to show
         self._cap.set(cv2.CAP_PROP_POS_FRAMES, self._current_frame)
         ret, frame = self._cap.read()
         if ret:
-            width = int(self._cap.get(3))
-            height = int(self._cap.get(4))
+            self.width = int(self._cap.get(3))
+            self.height = int(self._cap.get(4))
             self._frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB) # obtain the converted frame image
-            frame_image = QImage(self._frame.tostring(), width, height, self._frame.strides[0], QImage.Format.Format_RGB888)
+
+            self._change_frame()
+
+            frame_image = QImage(self._frame.tostring(), self.width, self.height, self._frame.strides[0], QImage.Format.Format_RGB888)
             self._ui_window.video_player.setPixmap(QPixmap.fromImage(frame_image).scaled(self._ui_window.video_player.size(), aspectMode=Qt.AspectRatioMode.KeepAspectRatioByExpanding))
 
     def get_frame(self):
         # return current frame image
         return self._frame
+
     def _obtain_frame(self):
         self._current_frame = int(self._cap.get(cv2.CAP_PROP_POS_FRAMES))
         self._total_frame = int(self._cap.get(cv2.CAP_PROP_FRAME_COUNT))
@@ -92,7 +113,6 @@ class video_player():
             self._end_frame = self._total_frame
             self._is_first_time = False
         self._change_frame_edit()
-
 
     def _play_video(self):
         while True:
@@ -205,24 +225,30 @@ class video_player():
         print("save")
         img.save(f'./img/{self._current_frame}.png', "PNG")
 
-    def get_play_mode(self):
-        # obtain the current mode of comboBox
-        return self._ui_window.comboBox.text()
+    def _set_mode(self):
+        self._mode = self._ui_window.comboBox.text()
 
-    # def _detect_change_comboBox_mode(self):
-    #     match self.get_play_mode():
-    #         case "Viewmode":
-    #             return
-    #         case "Left person":
-    #             pass
-    #         case "Right pserson":
-    #             pass
-    #
-    # def _obtain_current_frame_middle_value(self):
-    #     results = self._model(self._frame)
-    #     table = results.pandas().xyxy[0]
-    #     person_table = table[table['name'] == 'person']
-    #     left_x = min(person_table['xmax'][0], person_table['xmax'][1], left_x)
-    #     right_x = max(person_table['xmin'][0], person_table['xmin'][1], right_x)
-    #     middle = int((left_x + right_x) / 2)
-    #
+    def _obtain_current_frame_middle_value(self):
+        # use yolo to obtain the middle value of the human
+        results = self._model(self._frame)
+        table = results.pandas().xyxy[0]
+        person_table = table[table['name'] == 'person']
+        left_x = min(person_table['xmax'][0], person_table['xmax'][1], self._left_value)
+        right_x = max(person_table['xmin'][0], person_table['xmin'][1], self._right_value)
+        self._middle_value = int((left_x + right_x) / 2)
+
+    def _change_frame(self):
+        # detect the comboBox to choose which image should be shown
+        image = np.zeros(self._frame.shape, np.uint8)
+        self._obtain_current_frame_middle_value()
+        match self._mode:
+            case "Viewmode":
+                return
+            case "Left person":
+                image[:self.height, :self._middle_value] = self._frame[:self.height, :self._middle_value]
+                self._frame = image
+                return
+            case "Right person":
+                image[:self.height, self._middle_value:] = self._frame[:self.height, self._middle_value:]
+                self._frame = image
+                return

@@ -644,7 +644,7 @@
   <customwidget>
    <class>QLabeledRangeSlider</class>
    <extends>QSlider</extends>
-   <header>qtrangeslider</header>
+   <header>superqt</header>
   </customwidget>
   <customwidget>
    <class>ComboBox</class>

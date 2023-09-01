@@ -30,7 +30,7 @@ while True:
     middle = int((left_x + right_x) / 2)
 
     image = np.zeros(frame.shape, np.uint8)
-    image[:height, :middle] = frame[:height, :middle]
+    image[:height, middle:] = frame[:height, middle:]
     cv2.imshow('image', image)
 
     if cv2.waitKey(1) == ord('q'):
