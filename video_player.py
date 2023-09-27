@@ -8,12 +8,12 @@ from PySide6.QtGui import (QBrush, QColor, QConicalGradient, QCursor,
     QPalette, QPixmap, QRadialGradient, QTransform)
 from PySide6.QtWidgets import (QApplication, QHBoxLayout, QMainWindow, QMenuBar,
     QSizePolicy, QSpacerItem, QStatusBar, QVBoxLayout, QFileDialog,
-    QWidget)
+    QWidget, QMessageBox)
 import cv2
 import numpy as np
 import yolov5
-import pandas
-
+import add_action
+import sys
 
 
 class video_player():
@@ -24,11 +24,24 @@ class video_player():
         self._ui_window = Ui_MainWindow()
         self._ui_window.setupUi(self.window)
 
+        self._add_action_ui = add_action.add_action()
+        self._add_action_window = QMainWindow()
+        self._add_action_ui.action_window.setupUi(self._add_action_window)
+        self._add_action_window.setWindowTitle("Add action")
+        self._add_action_ui.set_up()
+
+
+
 
         self._file_path = None
         self._history_path = None
         self._is_first_time = True
         self._ui_window.Load.clicked.connect(self._open_file)
+
+        self._action_array = [self._ui_window.Action_1, self._ui_window.Action_2, self._ui_window.Action_3,
+                              self._ui_window.Action_4, self._ui_window.Action_5, self._ui_window.Action_6,
+                              self._ui_window.Action_7, self._ui_window.Action_8, self._ui_window.Action_9]
+
 
         self._model = yolov5.load('yolov5s.pt')
         self._clear_value()
@@ -45,6 +58,12 @@ class video_player():
         self._ui_window.frame_slider.sliderPressed.connect(self._pause_video)
         self._ui_window.frame_slider.sliderReleased.connect(self._slider_value_changed)
         self._ui_window.frames_slider.valueChanged.connect(self._double_slider_value_changed)
+
+        self._ui_window.AddAction.clicked.connect(self._add_action)
+        self._add_action_ui.action_window.SaveButton.clicked.connect(self._add_action_button)
+        self._add_action_ui.action_window.ActionChooseBox.currentIndexChanged.connect(self._change_action_text)
+        self._add_action_ui.action_window.CancelButton.clicked.connect(self._add_action_ui.cancel_text)
+
 
         self._ui_window.Screenshot.clicked.connect(self._screenshot)
 
@@ -63,16 +82,15 @@ class video_player():
         self.width = 0
         self.height = 0
 
+        for action in self._action_array:
+            action.hide()
+            action.setCheckable(False)
+
+        self._ui_window.Action_1.setCheckable(True)
         self._ui_window.Action_1.setChecked(True)
-        self._ui_window.Action_1.setCheckable(False)
-        self._ui_window.Action_2.setCheckable(False)
-        self._ui_window.Action_3.setCheckable(False)
-        self._ui_window.Action_4.setCheckable(False)
-        self._ui_window.Action_5.setCheckable(False)
-        self._ui_window.Action_6.setCheckable(False)
-        self._ui_window.Action_7.setCheckable(False)
-        self._ui_window.Action_8.setCheckable(False)
-        self._ui_window.Action_9.setCheckable(False)
+        self._ui_window.Action_1.show()
+        self._ui_window.Action_1.setText("Background Action")
+
 
     def _open_file(self):
         self._history_path = self._file_path
@@ -252,3 +270,27 @@ class video_player():
                 image[:self.height, self._middle_value:] = self._frame[:self.height, self._middle_value:]
                 self._frame = image
                 return
+
+    def _add_action(self):
+        self._add_action_window.show()
+
+    def _add_action_button(self):
+        self._add_action_ui.add_action()
+        if self._add_action_ui.action_name != "" and self._add_action_ui.is_add:
+            self._action_array[self._add_action_ui.count].setText(self._add_action_ui.action_name)
+            self._action_array[self._add_action_ui.count].show()
+            self._action_array[self._add_action_ui.count].setCheckable(True)
+            self._action_array[self._add_action_ui.count].setChecked(True)
+            self._add_action_ui.add_combo_item()
+        if (not self._add_action_ui.is_add) and self._add_action_ui.action_name != "":
+            self._action_array[self._add_action_ui.current_item-1].setText(self._add_action_ui.action_name)
+            self._action_array[self._add_action_ui.current_item-1].setChecked(True)
+
+    def _change_action_text(self):
+        self._add_action_ui.current_item = self._add_action_ui.action_window.ActionChooseBox.currentIndex()
+        if self._add_action_ui.action_window.ActionChooseBox.currentText() == "Add action":
+            text = ""
+        else:
+            text = self._action_array[self._add_action_ui.current_item-1].text()
+        self._add_action_ui.action_name = text
+        self._add_action_ui.action_window.ActionEdit.setText(text)

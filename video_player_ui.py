@@ -27,7 +27,7 @@ class Ui_MainWindow(object):
     def setupUi(self, MainWindow):
         if not MainWindow.objectName():
             MainWindow.setObjectName(u"MainWindow")
-        MainWindow.resize(696, 753)
+        MainWindow.resize(696, 751)
         self.centralwidget = QWidget(MainWindow)
         self.centralwidget.setObjectName(u"centralwidget")
         sizePolicy = QSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
@@ -170,6 +170,11 @@ class Ui_MainWindow(object):
         self.comboBox.setObjectName(u"comboBox")
 
         self.horizontalLayout_9.addWidget(self.comboBox)
+
+        self.AddAction = FilledPushButton(self.layoutWidget)
+        self.AddAction.setObjectName(u"AddAction")
+
+        self.horizontalLayout_9.addWidget(self.AddAction)
 
         self.horizontalSpacer_9 = QSpacerItem(40, 20, QSizePolicy.Expanding, QSizePolicy.Minimum)
 
@@ -395,6 +400,7 @@ class Ui_MainWindow(object):
         self.comboBox.setItemText(1, QCoreApplication.translate("MainWindow", u"Left person", None))
         self.comboBox.setItemText(2, QCoreApplication.translate("MainWindow", u"Right person", None))
 
+        self.AddAction.setText(QCoreApplication.translate("MainWindow", u"Add action", None))
         self.Action_1.setText(QCoreApplication.translate("MainWindow", u"Action 1", None))
         self.Action_2.setText(QCoreApplication.translate("MainWindow", u"Action 2", None))
         self.Action_3.setText(QCoreApplication.translate("MainWindow", u"Action 3", None))

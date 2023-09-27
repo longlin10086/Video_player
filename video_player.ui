@@ -7,7 +7,7 @@
     <x>0</x>
     <y>0</y>
     <width>696</width>
-    <height>753</height>
+    <height>751</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -152,7 +152,7 @@
               <string/>
              </property>
              <property name="pixmap">
-              <pixmap>img/OIP.jpg</pixmap>
+              <pixmap>video_player/img/OIP.jpg</pixmap>
              </property>
             </widget>
            </item>
@@ -308,6 +308,13 @@
                <string>Right person</string>
               </property>
              </item>
+            </widget>
+           </item>
+           <item>
+            <widget class="FilledPushButton" name="AddAction">
+             <property name="text">
+              <string>Add action</string>
+             </property>
             </widget>
            </item>
            <item>
