@@ -98,6 +98,10 @@ class video_player(QMainWindow, QWidget):
         self._add_action_ui.action_window.CancelButton.clicked.connect(
             self._add_action_ui.cancel_text)
 
+        self._read_or_write = "write"
+        self._ui_window.Write.clicked.connect(self._data_write_and_read)
+        self._ui_window.Conf.clicked.connect(self._read_csv)
+
         self._ui_window.Screenshot.clicked.connect(self._screenshot)
         self._ui_window.Save.clicked.connect(self._save_to_csv)
 
@@ -125,7 +129,7 @@ class video_player(QMainWindow, QWidget):
         self._ui_window.Action_1.setCheckable(True)
         self._ui_window.Action_1.setChecked(True)
         self._ui_window.Action_1.show()
-        self._ui_window.Action_1.setText("Background Action")
+        self._ui_window.Action_1.setText("Background action")
 
     def _open_file(self):
         self._history_path = self._file_path
@@ -377,6 +381,7 @@ class video_player(QMainWindow, QWidget):
         index = [i for i in range(1, self._total_frame + 1)]
         self._dataframe = pd.DataFrame(columns=['Action'], index=index)
         self._dataframe['Action'] = 'Background action'
+        self._dataframe.index.name = "Frame"
         print(self._dataframe)
 
     def _connect_action_frame(self):
@@ -385,9 +390,37 @@ class video_player(QMainWindow, QWidget):
             if action.isChecked():
                 action_name = action.text()
                 break
-        self._dataframe['Action'][self._current_frame - 1] = action_name
+        if self._read_or_write == "write":
+            self._dataframe['Action'][self._current_frame - 1] = action_name
 
     def _save_to_csv(self):
         print("save")
         with open(f"{self.file_name}.csv", 'w'):
             self._dataframe.to_csv(path_or_buf=f"{self.file_name}.csv")
+
+    def _read_csv(self):
+        file_path, _ = QFileDialog.getOpenFileName(self._ui_window.Conf, "请选择对应文件", ".", "csv(*.csv)")
+        self._dataframe = pd.read_csv(file_path, index_col="Frame")
+        action = self._dataframe['Action']
+        action_tuple = set(action)
+        action_tuple.discard('Background action')
+        action_list = list(action_tuple)
+        for i in range(0, len(action_list)):
+            self._action_array[i+1].setText(action_list[i])
+            self._action_array[i+1].show()
+            self._action_array[i+1].setCheckable(True)
+            self._action_array[i+1].setChecked(True)
+            self._add_action_ui.count += 1
+
+        print(action_tuple)
+
+    def _data_write_and_read(self):
+        match self._read_or_write:
+            case "write":
+                self._ui_window.Write.setText("Read")
+                self._read_or_write = "read"
+                return
+            case "read":
+                self._ui_window.Write.setText("Write")
+                self._read_or_write = "write"
+                return
