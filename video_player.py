@@ -41,8 +41,19 @@ import pandas as pd
 
 
 class video_player(QMainWindow, QWidget):
-
+    """ video_player 类，项目主体，即项目主要界面
+    """
     def __init__(self):
+        """
+        :argument: _ui_window 项目主页面的ui
+        :argument: _add_action_window 点击add_action按钮后的弹出界面
+        :argument: _file_path 视频文件的path
+        :argument: _history_path 上一次打开的视频文件path
+        :argument: _action_array 包含9个Radio Button的集合
+        :argument: _dataframe pandas中的表格（缓存）
+        :argument: filename 保存csv的文件名字
+        :argument: _is_on 判断当前视频播放是否结束的标签
+        """
         super().__init__()
         self._ui_window = Ui_MainWindow()
         self._ui_window.setupUi(self)
@@ -110,6 +121,10 @@ class video_player(QMainWindow, QWidget):
         self._ui_window.total.setText("Total frames: 0")
 
     def _clear_value(self):
+        """
+        对所有配置进行初始化操作，恢复到最开始时的样式
+        """
+        # 三个value表示yolo中视频的左右中值，以方便切割
         self._left_value = 9999999999
         self._right_value = 0
         self._middle_value = 0
@@ -132,6 +147,9 @@ class video_player(QMainWindow, QWidget):
         self._ui_window.Action_1.setText("Background action")
 
     def _open_file(self):
+        """
+        打开对应视频文件，用opencv加载
+        """
         self._history_path = self._file_path
         self._file_path, _ = QFileDialog.getOpenFileName(
             self._ui_window.Load, "请选择对应文件", ".", "mp4(*.mp4);;avi(*.avi);;flv(*.flv)")
@@ -145,7 +163,9 @@ class video_player(QMainWindow, QWidget):
             self._play_video()
 
     def _set_frame(self):
-        # set the current frame to show
+        """
+        将opencv获取到的当前帧转化成qt中的pixmap以显示出来
+        """
         self._cap.set(cv2.CAP_PROP_POS_FRAMES, self._current_frame)
         ret, frame = self._cap.read()
         if ret:
@@ -172,6 +192,9 @@ class video_player(QMainWindow, QWidget):
         return self._frame
 
     def _obtain_frame(self):
+        """
+        获取视频的相关数据后对ui进行初始化配置
+        """
         self._current_frame = int(self._cap.get(cv2.CAP_PROP_POS_FRAMES))
         self._total_frame = int(self._cap.get(cv2.CAP_PROP_FRAME_COUNT))
         self._ui_window.current.setText(
@@ -183,6 +206,9 @@ class video_player(QMainWindow, QWidget):
         self._change_frame_edit()
 
     def _play_video(self):
+        """
+        播放视频，即对当前图像界面进行刷新
+        """
         while True:
             self._obtain_frame()
             self._set_frame()
@@ -195,6 +221,9 @@ class video_player(QMainWindow, QWidget):
         # self._cap.release()
 
     def _single_frame_edit(self):
+        """
+        在ui中显示单帧参数修改slider的数据
+        """
         self._ui_window.frame_slider.setMaximum(self._total_frame)
         self._ui_window.frame_slider.setValue(self._current_frame)
         self._ui_window.frame_slider.setSliderPosition(self._current_frame)
@@ -202,6 +231,9 @@ class video_player(QMainWindow, QWidget):
         self._ui_window.frame_edit.setValue(self._current_frame)
 
     def _pause_and_play_video(self):
+        """
+        判断当前视频状态是暂停还是播放，作出相应行为
+        """
         match self._button_mode:
             case "Pause":
                 self._is_on = False
@@ -224,7 +256,9 @@ class video_player(QMainWindow, QWidget):
                 self._play_video()
 
     def _slider_value_changed(self):
-        print("trigger_slider")
+        """
+        修改单帧slider后发生的行为
+        """
         if self._is_changing_flag:
             return
         self._current_frame = self._ui_window.frame_slider.sliderPosition()
@@ -237,39 +271,54 @@ class video_player(QMainWindow, QWidget):
         self._pause_and_play_video()
 
     def _is_spinbox_clicked(self):
+        """
+        检查spinbox是否被点击，如果有则将视频暂停等待修改
+        """
         if self._ui_window.frame_edit.hasFocus() or self._ui_window.max_frame.hasFocus(
         ) or self._ui_window.min_frame.hasFocus():
             self._pause_video()
 
     def _is_slider_clicked(self):
+        """
+        检查slider是否被点击，如果有则将视频暂停等待修改
+        """
         if self._ui_window.frames_slider.hasFocus():
             self._pause_video()
 
     def _edit_value_changed(self):
+        """
+        修改spinbox的值后发生的行为
+        """
         if self._is_changing_flag:
             return
-        print("edit_value")
         self._current_frame = self._ui_window.frame_edit.value() - 1
         self._set_frame()
         self._obtain_frame()
 
     def _min_value_changed(self):
+        """
+        修改帧数所能到达的最小值
+        """
         if self._is_changing_flag:
             return
-        print("min_value")
         self._current_frame = self._ui_window.min_frame.value() - 1
         self._set_frame()
         self._obtain_frame()
 
     def _max_value_changed(self):
+        """
+        修改帧数所能到达的最大值
+        """
         if self._is_changing_flag:
             return
-        print("max_value")
         self._end_frame = self._ui_window.max_frame.value()
         self._set_frame()
         self._obtain_frame()
 
     def _double_slider_value_changed(self):
+        """
+        修改slider的值后发生的行为（含两个滑块的slider）
+        """
         if self._is_changing_flag:
             return
         _current_frame, _end_frame = self._ui_window.frames_slider.value()
@@ -279,6 +328,9 @@ class video_player(QMainWindow, QWidget):
         self._obtain_frame()
 
     def _double_frame_edit(self):
+        """
+        修改spinbox的值后发生的行为（含两个滑块的slider）
+        """
         self._ui_window.min_frame.setMaximum(self._total_frame)
         self._ui_window.max_frame.setMaximum(self._total_frame)
         self._ui_window.frames_slider.setMaximum(self._total_frame)
@@ -343,6 +395,10 @@ class video_player(QMainWindow, QWidget):
                 return
 
     def _obtain_action(self, image):
+        """
+        初始化pandas的dataframe
+        :param image: yolo处理后的image图像
+        """
         self._frame = image
         if self._dataframe is None:
             self._creat_panda_table()
@@ -354,6 +410,9 @@ class video_player(QMainWindow, QWidget):
         self._add_action_window.show()
 
     def _add_action_button(self):
+        """
+        在ui界面中显示新增的action按钮
+        """
         self._add_action_ui.add_action()
         if self._add_action_ui.action_name != "" and self._add_action_ui.is_add:
             self._action_array[self._add_action_ui.count].setText(
@@ -382,9 +441,12 @@ class video_player(QMainWindow, QWidget):
         self._dataframe = pd.DataFrame(columns=['Action'], index=index)
         self._dataframe['Action'] = 'Background action'
         self._dataframe.index.name = "Frame"
-        print(self._dataframe)
+
 
     def _connect_action_frame(self):
+        """
+        将当前的action按钮与当前帧进行关联捆绑
+        """
         action_name = ""
         for action in self._action_array:
             if action.isChecked():
@@ -415,6 +477,9 @@ class video_player(QMainWindow, QWidget):
         print(action_tuple)
 
     def _data_write_and_read(self):
+        """
+        检查当前是write模式还是read模式
+        """
         match self._read_or_write:
             case "write":
                 self._ui_window.Write.setText("Read")

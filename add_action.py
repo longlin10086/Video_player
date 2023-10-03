@@ -1,5 +1,6 @@
 import add_action_ui
 
+
 class add_action:
     def __init__(self):
         self.action_window = add_action_ui.Ui_Form()
@@ -25,14 +26,13 @@ class add_action:
             self.current_item = self.action_window.ActionChooseBox.currentIndex()
             self.is_add = False
 
-
     def add_combo_item(self):
         self.action_window.ActionChooseBox.addItem("")
-        self.action_window.ActionChooseBox.setItemText(self.count+1, f"Action{self.count+1}: ")
+        self.action_window.ActionChooseBox.setItemText(
+            self.count + 1, f"Action{self.count+1}: ")
 
     def cancel_text(self):
         if self.action_window.ActionChooseBox.currentText() == "Add action":
             self.action_window.ActionEdit.setText("")
         else:
             self.action_window.ActionEdit.setText(self.action_name)
-
