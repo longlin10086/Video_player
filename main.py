@@ -19,5 +19,5 @@ if __name__ == '__main__':
     app = QApplication(sys.argv)
     video_player = video_player()
 
-    video_player.window.show()
+    video_player.show()
     app.exec()

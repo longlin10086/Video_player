@@ -27,7 +27,7 @@ class Ui_MainWindow(object):
     def setupUi(self, MainWindow):
         if not MainWindow.objectName():
             MainWindow.setObjectName(u"MainWindow")
-        MainWindow.resize(696, 751)
+        MainWindow.resize(686, 744)
         self.centralwidget = QWidget(MainWindow)
         self.centralwidget.setObjectName(u"centralwidget")
         sizePolicy = QSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
@@ -108,6 +108,12 @@ class Ui_MainWindow(object):
         self.horizontalSpacer_3 = QSpacerItem(40, 20, QSizePolicy.Expanding, QSizePolicy.Minimum)
 
         self.horizontalLayout_7.addItem(self.horizontalSpacer_3)
+
+        self.current_action_text = BodyLabel(self.layoutWidget)
+        self.current_action_text.setObjectName(u"current_action_text")
+        self.current_action_text.setMaximumSize(QSize(250, 40))
+
+        self.horizontalLayout_7.addWidget(self.current_action_text)
 
         self.current = BodyLabel(self.layoutWidget)
         self.current.setObjectName(u"current")
@@ -374,7 +380,7 @@ class Ui_MainWindow(object):
         MainWindow.setCentralWidget(self.centralwidget)
         self.menubar = QMenuBar(MainWindow)
         self.menubar.setObjectName(u"menubar")
-        self.menubar.setGeometry(QRect(0, 0, 696, 21))
+        self.menubar.setGeometry(QRect(0, 0, 686, 21))
         MainWindow.setMenuBar(self.menubar)
         self.statusbar = QStatusBar(MainWindow)
         self.statusbar.setObjectName(u"statusbar")
@@ -392,6 +398,7 @@ class Ui_MainWindow(object):
         self.Stop.setText(QCoreApplication.translate("MainWindow", u"Stop", None))
         self.Conf.setText(QCoreApplication.translate("MainWindow", u"Conf", None))
         self.video_player.setText("")
+        self.current_action_text.setText(QCoreApplication.translate("MainWindow", u"TextLabel", None))
         self.current.setText(QCoreApplication.translate("MainWindow", u"TextLabel", None))
         self.total.setText(QCoreApplication.translate("MainWindow", u"TextLabel", None))
         self.Pause.setText(QCoreApplication.translate("MainWindow", u"Pause", None))

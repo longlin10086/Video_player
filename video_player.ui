@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>696</width>
-    <height>751</height>
+    <width>686</width>
+    <height>744</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -188,6 +188,19 @@
               </size>
              </property>
             </spacer>
+           </item>
+           <item>
+            <widget class="BodyLabel" name="current_action_text">
+             <property name="maximumSize">
+              <size>
+               <width>250</width>
+               <height>40</height>
+              </size>
+             </property>
+             <property name="text">
+              <string>TextLabel</string>
+             </property>
+            </widget>
            </item>
            <item>
             <widget class="BodyLabel" name="current">
@@ -610,7 +623,7 @@
     <rect>
      <x>0</x>
      <y>0</y>
-     <width>696</width>
+     <width>686</width>
      <height>21</height>
     </rect>
    </property>

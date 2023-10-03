@@ -1,28 +1,53 @@
 from video_player_ui import Ui_MainWindow
 from PySide6.QtCore import (QCoreApplication, QDate, QDateTime, QLocale,
-    QMetaObject, QObject, QPoint, QRect,
-    QSize, QTime, QUrl, Qt)
-from PySide6.QtGui import (QBrush, QColor, QConicalGradient, QCursor,
-    QFont, QFontDatabase, QGradient, QIcon, Qt,
-    QImage, QKeySequence, QLinearGradient, QPainter,
-    QPalette, QPixmap, QRadialGradient, QTransform)
-from PySide6.QtWidgets import (QApplication, QHBoxLayout, QMainWindow, QMenuBar,
-    QSizePolicy, QSpacerItem, QStatusBar, QVBoxLayout, QFileDialog,
-    QWidget, QMessageBox)
+                            QMetaObject, QObject, QPoint, QRect,
+                            QSize, QTime, QUrl, Qt)
+from PySide6.QtGui import (
+    QBrush,
+    QColor,
+    QConicalGradient,
+    QCursor,
+    QFont,
+    QFontDatabase,
+    QGradient,
+    QIcon,
+    Qt,
+    QImage,
+    QKeySequence,
+    QLinearGradient,
+    QPainter,
+    QPalette,
+    QPixmap,
+    QRadialGradient,
+    QTransform,
+    QKeyEvent)
+from PySide6.QtWidgets import (
+    QApplication,
+    QHBoxLayout,
+    QMainWindow,
+    QMenuBar,
+    QSizePolicy,
+    QSpacerItem,
+    QStatusBar,
+    QVBoxLayout,
+    QFileDialog,
+    QWidget,
+    QMessageBox)
 import cv2
 import numpy as np
 import yolov5
 import add_action
-import sys
+import pandas as pd
 
 
-class video_player():
+class video_player(QMainWindow, QWidget):
 
     def __init__(self):
         super().__init__()
-        self.window = QMainWindow()
         self._ui_window = Ui_MainWindow()
-        self._ui_window.setupUi(self.window)
+        self._ui_window.setupUi(self)
+
+        # self._space_press_event(Qt.Key_Space)
 
         self._add_action_ui = add_action.add_action()
         self._add_action_window = QMainWindow()
@@ -30,44 +55,53 @@ class video_player():
         self._add_action_window.setWindowTitle("Add action")
         self._add_action_ui.set_up()
 
-
-
-
         self._file_path = None
         self._history_path = None
         self._is_first_time = True
         self._ui_window.Load.clicked.connect(self._open_file)
 
-        self._action_array = [self._ui_window.Action_1, self._ui_window.Action_2, self._ui_window.Action_3,
-                              self._ui_window.Action_4, self._ui_window.Action_5, self._ui_window.Action_6,
-                              self._ui_window.Action_7, self._ui_window.Action_8, self._ui_window.Action_9]
+        self._action_array = [
+            self._ui_window.Action_1,
+            self._ui_window.Action_2,
+            self._ui_window.Action_3,
+            self._ui_window.Action_4,
+            self._ui_window.Action_5,
+            self._ui_window.Action_6,
+            self._ui_window.Action_7,
+            self._ui_window.Action_8,
+            self._ui_window.Action_9]
 
+        self._dataframe = None
+        self.file_name = None
 
         self._model = yolov5.load('yolov5s.pt')
         self._clear_value()
         self._mode = "Viewmode"
         self._ui_window.comboBox.currentTextChanged.connect(self._set_mode)
 
-
         self._is_on = True
         self._button_mode = "Pause"
         self._ui_window.Pause.clicked.connect(self._pause_and_play_video)
 
-
         self._is_changing_flag = False
         self._ui_window.frame_slider.sliderPressed.connect(self._pause_video)
-        self._ui_window.frame_slider.sliderReleased.connect(self._slider_value_changed)
-        self._ui_window.frames_slider.valueChanged.connect(self._double_slider_value_changed)
+        self._ui_window.frame_slider.sliderReleased.connect(
+            self._slider_value_changed)
+        self._ui_window.frames_slider.valueChanged.connect(
+            self._double_slider_value_changed)
 
         self._ui_window.AddAction.clicked.connect(self._add_action)
-        self._add_action_ui.action_window.SaveButton.clicked.connect(self._add_action_button)
-        self._add_action_ui.action_window.ActionChooseBox.currentIndexChanged.connect(self._change_action_text)
-        self._add_action_ui.action_window.CancelButton.clicked.connect(self._add_action_ui.cancel_text)
-
+        self._add_action_ui.action_window.SaveButton.clicked.connect(
+            self._add_action_button)
+        self._add_action_ui.action_window.ActionChooseBox.currentIndexChanged.connect(
+            self._change_action_text)
+        self._add_action_ui.action_window.CancelButton.clicked.connect(
+            self._add_action_ui.cancel_text)
 
         self._ui_window.Screenshot.clicked.connect(self._screenshot)
+        self._ui_window.Save.clicked.connect(self._save_to_csv)
 
-        self._ui_window.retranslateUi(self.window)
+        self._ui_window.retranslateUi(self)
         self._ui_window.current.setText("Current frame: 0")
         self._ui_window.total.setText("Total frames: 0")
 
@@ -82,6 +116,8 @@ class video_player():
         self.width = 0
         self.height = 0
 
+        self._ui_window.current_action_text.setText("Current action: ")
+
         for action in self._action_array:
             action.hide()
             action.setCheckable(False)
@@ -91,10 +127,10 @@ class video_player():
         self._ui_window.Action_1.show()
         self._ui_window.Action_1.setText("Background Action")
 
-
     def _open_file(self):
         self._history_path = self._file_path
-        self._file_path, _ = QFileDialog.getOpenFileName(self._ui_window.Load, "请选择对应文件", ".", "mp4(*.mp4);;avi(*.avi);;flv(*.flv)")
+        self._file_path, _ = QFileDialog.getOpenFileName(
+            self._ui_window.Load, "请选择对应文件", ".", "mp4(*.mp4);;avi(*.avi);;flv(*.flv)")
         if self._is_first_time:
             self._history_path = self._file_path
         print(self._file_path)
@@ -111,12 +147,21 @@ class video_player():
         if ret:
             self.width = int(self._cap.get(3))
             self.height = int(self._cap.get(4))
-            self._frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB) # obtain the converted frame image
+            # obtain the converted frame image
+            self._frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
 
             self._change_frame()
 
-            frame_image = QImage(self._frame.tostring(), self.width, self.height, self._frame.strides[0], QImage.Format.Format_RGB888)
-            self._ui_window.video_player.setPixmap(QPixmap.fromImage(frame_image).scaled(self._ui_window.video_player.size(), aspectMode=Qt.AspectRatioMode.KeepAspectRatioByExpanding))
+            frame_image = QImage(
+                self._frame.tostring(),
+                self.width,
+                self.height,
+                self._frame.strides[0],
+                QImage.Format.Format_RGB888)
+            self._ui_window.video_player.setPixmap(
+                QPixmap.fromImage(frame_image).scaled(
+                    self._ui_window.video_player.size(),
+                    aspectMode=Qt.AspectRatioMode.KeepAspectRatioByExpanding))
 
     def get_frame(self):
         # return current frame image
@@ -125,7 +170,8 @@ class video_player():
     def _obtain_frame(self):
         self._current_frame = int(self._cap.get(cv2.CAP_PROP_POS_FRAMES))
         self._total_frame = int(self._cap.get(cv2.CAP_PROP_FRAME_COUNT))
-        self._ui_window.current.setText(f"Current frame: {self._current_frame}")
+        self._ui_window.current.setText(
+            f"Current frame: {self._current_frame}")
         self._ui_window.total.setText(f"Total frames: {self._total_frame}")
         if self._is_first_time:
             self._end_frame = self._total_frame
@@ -159,9 +205,12 @@ class video_player():
                 self._change_frame_edit()
                 self._button_mode = "Play"
                 self._ui_window.Pause.setText("Play")
-                self._ui_window.frame_edit.valueChanged.connect(self._edit_value_changed)
-                self._ui_window.min_frame.valueChanged.connect(self._min_value_changed)
-                self._ui_window.max_frame.valueChanged.connect(self._max_value_changed)
+                self._ui_window.frame_edit.valueChanged.connect(
+                    self._edit_value_changed)
+                self._ui_window.min_frame.valueChanged.connect(
+                    self._min_value_changed)
+                self._ui_window.max_frame.valueChanged.connect(
+                    self._max_value_changed)
             case "Play":
                 self._is_on = True
                 self._cap.set(cv2.CAP_PROP_POS_FRAMES, self._current_frame)
@@ -180,20 +229,23 @@ class video_player():
 
     def _pause_video(self):
         self._button_mode = "Pause"
+        print(self._dataframe)
         self._pause_and_play_video()
 
     def _is_spinbox_clicked(self):
-        if self._ui_window.frame_edit.hasFocus() or self._ui_window.max_frame.hasFocus() or self._ui_window.min_frame.hasFocus():
+        if self._ui_window.frame_edit.hasFocus() or self._ui_window.max_frame.hasFocus(
+        ) or self._ui_window.min_frame.hasFocus():
             self._pause_video()
 
     def _is_slider_clicked(self):
         if self._ui_window.frames_slider.hasFocus():
             self._pause_video()
+
     def _edit_value_changed(self):
         if self._is_changing_flag:
             return
         print("edit_value")
-        self._current_frame = self._ui_window.frame_edit.value()-1
+        self._current_frame = self._ui_window.frame_edit.value() - 1
         self._set_frame()
         self._obtain_frame()
 
@@ -201,7 +253,7 @@ class video_player():
         if self._is_changing_flag:
             return
         print("min_value")
-        self._current_frame = self._ui_window.min_frame.value()-1
+        self._current_frame = self._ui_window.min_frame.value() - 1
         self._set_frame()
         self._obtain_frame()
 
@@ -217,7 +269,7 @@ class video_player():
         if self._is_changing_flag:
             return
         _current_frame, _end_frame = self._ui_window.frames_slider.value()
-        self._current_frame = _current_frame-1
+        self._current_frame = _current_frame - 1
         self._end_frame = _end_frame
         self._set_frame()
         self._obtain_frame()
@@ -228,7 +280,8 @@ class video_player():
         self._ui_window.frames_slider.setMaximum(self._total_frame)
 
         self._ui_window.min_frame.setValue(self._current_frame)
-        self._ui_window.frames_slider.setValue((self._current_frame, self._end_frame))
+        self._ui_window.frames_slider.setValue(
+            (self._current_frame, self._end_frame))
         self._ui_window.max_frame.setValue(self._end_frame)
 
     def _change_frame_edit(self):
@@ -251,8 +304,14 @@ class video_player():
         results = self._model(self._frame)
         table = results.pandas().xyxy[0]
         person_table = table[table['name'] == 'person']
-        left_x = min(person_table['xmax'][0], person_table['xmax'][1], self._left_value)
-        right_x = max(person_table['xmin'][0], person_table['xmin'][1], self._right_value)
+        left_x = min(
+            person_table['xmax'][0],
+            person_table['xmax'][1],
+            self._left_value)
+        right_x = max(
+            person_table['xmin'][0],
+            person_table['xmin'][1],
+            self._right_value)
         self._middle_value = int((left_x + right_x) / 2)
 
     def _change_frame(self):
@@ -263,13 +322,29 @@ class video_player():
             case "Viewmode":
                 return
             case "Left person":
-                image[:self.height, :self._middle_value] = self._frame[:self.height, :self._middle_value]
-                self._frame = image
+                image[:self.height,
+                      :self._middle_value] = self._frame[:self.height,
+                                                         :self._middle_value]
+                self._obtain_action(image)
+                file_path, _ = self._file_path.split('.')
+                self.file_name = f"{file_path}_left"
                 return
             case "Right person":
-                image[:self.height, self._middle_value:] = self._frame[:self.height, self._middle_value:]
-                self._frame = image
+                image[:self.height,
+                      self._middle_value:] = self._frame[:self.height,
+                                                         self._middle_value:]
+                self._obtain_action(image)
+                file_path, _ = self._file_path.split('.')
+                self.file_name = f"{file_path}_right"
                 return
+
+    def _obtain_action(self, image):
+        self._frame = image
+        if self._dataframe is None:
+            self._creat_panda_table()
+        self._ui_window.current_action_text.setText(
+            f"Current action: {self._dataframe['Action'][self._current_frame - 2]}")
+        self._connect_action_frame()
 
     def _add_action(self):
         self._add_action_window.show()
@@ -277,20 +352,42 @@ class video_player():
     def _add_action_button(self):
         self._add_action_ui.add_action()
         if self._add_action_ui.action_name != "" and self._add_action_ui.is_add:
-            self._action_array[self._add_action_ui.count].setText(self._add_action_ui.action_name)
+            self._action_array[self._add_action_ui.count].setText(
+                self._add_action_ui.action_name)
             self._action_array[self._add_action_ui.count].show()
             self._action_array[self._add_action_ui.count].setCheckable(True)
             self._action_array[self._add_action_ui.count].setChecked(True)
             self._add_action_ui.add_combo_item()
         if (not self._add_action_ui.is_add) and self._add_action_ui.action_name != "":
-            self._action_array[self._add_action_ui.current_item-1].setText(self._add_action_ui.action_name)
-            self._action_array[self._add_action_ui.current_item-1].setChecked(True)
+            self._action_array[self._add_action_ui.current_item -
+                               1].setText(self._add_action_ui.action_name)
+            self._action_array[self._add_action_ui.current_item -
+                               1].setChecked(True)
 
     def _change_action_text(self):
         self._add_action_ui.current_item = self._add_action_ui.action_window.ActionChooseBox.currentIndex()
         if self._add_action_ui.action_window.ActionChooseBox.currentText() == "Add action":
             text = ""
         else:
-            text = self._action_array[self._add_action_ui.current_item-1].text()
+            text = self._action_array[self._add_action_ui.current_item - 1].text()
         self._add_action_ui.action_name = text
         self._add_action_ui.action_window.ActionEdit.setText(text)
+
+    def _creat_panda_table(self):
+        index = [i for i in range(1, self._total_frame + 1)]
+        self._dataframe = pd.DataFrame(columns=['Action'], index=index)
+        self._dataframe['Action'] = 'Background action'
+        print(self._dataframe)
+
+    def _connect_action_frame(self):
+        action_name = ""
+        for action in self._action_array:
+            if action.isChecked():
+                action_name = action.text()
+                break
+        self._dataframe['Action'][self._current_frame - 1] = action_name
+
+    def _save_to_csv(self):
+        print("save")
+        with open(f"{self.file_name}.csv", 'w'):
+            self._dataframe.to_csv(path_or_buf=f"{self.file_name}.csv")
