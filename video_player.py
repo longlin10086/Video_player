@@ -85,7 +85,7 @@ class video_player(QMainWindow, QWidget):
         self._dataframe = None
         self.file_name = None
 
-        self._model = yolov5.load('yolov5s.pt')
+        self._model = yolov5.load('./yolov5s.pt')
         self._clear_value()
         self._mode = "Viewmode"
         self._ui_window.comboBox.currentTextChanged.connect(self._set_mode)
@@ -95,6 +95,8 @@ class video_player(QMainWindow, QWidget):
         self._ui_window.Pause.clicked.connect(self._pause_and_play_video)
 
         self._is_changing_flag = False
+        self._ui_window.frame_slider.setMinimum(1)
+        self._ui_window.frames_slider.setMinimum(1)
         self._ui_window.frame_slider.sliderPressed.connect(self._pause_video)
         self._ui_window.frame_slider.sliderReleased.connect(
             self._slider_value_changed)
@@ -129,7 +131,7 @@ class video_player(QMainWindow, QWidget):
         self._right_value = 0
         self._middle_value = 0
 
-        self._current_frame = 0
+        self._current_frame = 1
         self._total_frame = 0
 
         self.width = 0
@@ -159,14 +161,14 @@ class video_player(QMainWindow, QWidget):
         if self._file_path:
             self._clear_value()
             self._cap = cv2.VideoCapture(self._file_path)
-            self._cap.set(cv2.CAP_PROP_POS_FRAMES, self._current_frame)
+            # self._cap.set(cv2.CAP_PROP_POS_FRAMES, self._current_frame)
             self._play_video()
 
     def _set_frame(self):
         """
         将opencv获取到的当前帧转化成qt中的pixmap以显示出来
         """
-        self._cap.set(cv2.CAP_PROP_POS_FRAMES, self._current_frame)
+        self._cap.set(cv2.CAP_PROP_POS_FRAMES, self._current_frame-1)
         ret, frame = self._cap.read()
         if ret:
             self.width = int(self._cap.get(3))
@@ -210,8 +212,9 @@ class video_player(QMainWindow, QWidget):
         播放视频，即对当前图像界面进行刷新
         """
         while True:
-            self._obtain_frame()
+            self._current_frame += 1
             self._set_frame()
+            self._obtain_frame()
             self._is_spinbox_clicked()
             self._is_slider_clicked()
             if cv2.waitKey(1) == ord('q') or (not self._is_on):
@@ -291,7 +294,7 @@ class video_player(QMainWindow, QWidget):
         """
         if self._is_changing_flag:
             return
-        self._current_frame = self._ui_window.frame_edit.value() - 1
+        self._current_frame = self._ui_window.frame_edit.value()
         self._set_frame()
         self._obtain_frame()
 
@@ -301,7 +304,7 @@ class video_player(QMainWindow, QWidget):
         """
         if self._is_changing_flag:
             return
-        self._current_frame = self._ui_window.min_frame.value() - 1
+        self._current_frame = self._ui_window.min_frame.value()
         self._set_frame()
         self._obtain_frame()
 
@@ -322,7 +325,7 @@ class video_player(QMainWindow, QWidget):
         if self._is_changing_flag:
             return
         _current_frame, _end_frame = self._ui_window.frames_slider.value()
-        self._current_frame = _current_frame - 1
+        self._current_frame = _current_frame
         self._end_frame = _end_frame
         self._set_frame()
         self._obtain_frame()
@@ -403,7 +406,7 @@ class video_player(QMainWindow, QWidget):
         if self._dataframe is None:
             self._creat_panda_table()
         self._ui_window.current_action_text.setText(
-            f"Current action: {self._dataframe['Action'][self._current_frame - 2]}")
+            f"Current action: {self._dataframe['Action'][self._current_frame]}")
         self._connect_action_frame()
 
     def _add_action(self):
